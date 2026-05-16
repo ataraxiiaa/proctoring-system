@@ -6,6 +6,8 @@ from app.schemas.user import UserCreate, UserOut, Token
 from app.auth.security import hash_password
 from fastapi.security import OAuth2PasswordRequestForm
 from app.auth.security import verify_password, create_access_token
+from app.auth.dependencies import get_current_user
+
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -20,7 +22,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         )
     new_user = User(
         email=user_data.email,
-        hashed_password = hash_password(user_data.password)
+        full_name=user_data.full_name,
+        hashed_password=hash_password(user_data.password)
     )
     db.add(new_user)
     db.commit()
@@ -28,7 +31,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login",response_model=Token)
-def login(form_data = OAuth2PasswordRequestForm(),db : Session = Depends(get_db)):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user:
@@ -41,5 +44,16 @@ def login(form_data = OAuth2PasswordRequestForm(),db : Session = Depends(get_db)
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(data={
+        "sub": user.email, 
+        "role": user.role
+    })
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserOut)
+def read_users_me(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+    

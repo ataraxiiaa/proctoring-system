@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
 
@@ -7,7 +7,7 @@ class UserBase(BaseModel):
     full_name: str
 
 class UserCreate(UserBase):
-    password:str
+    password: str
 
 class UserOut(UserBase):
     id:int
