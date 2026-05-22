@@ -21,7 +21,9 @@ export default function Navbar() {
       try {
         const payloadBase64 = token.split('.')[1];
         const decodedPayload = JSON.parse(atob(payloadBase64));
-        if (decodedPayload.role === 'admin') {
+        if (decodedPayload.role === 'superadmin') {
+          setDashboardUrl('/superadmin/admins');
+        } else if (decodedPayload.role === 'admin') {
           setDashboardUrl('/admin/dashboard');
         } else {
           setDashboardUrl('/student/dashboard');

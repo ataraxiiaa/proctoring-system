@@ -28,7 +28,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         
     return user
 
-def require_role(allowed_roles: list[str]):
+def require_role(allowed_roles: str | list[str]):
+    if isinstance(allowed_roles, str):
+        allowed_roles = [allowed_roles]
+        
     def role_checker(current_user: User = Depends(get_current_user)):
         if current_user.role not in allowed_roles:
             raise HTTPException(

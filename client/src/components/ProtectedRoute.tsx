@@ -2,12 +2,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+type Role = 'student' | 'admin' | 'superadmin';
+
 export default function ProtectedRoute({
   children,
   requiredRole
 }: {
   children: React.ReactNode,
-  requiredRole?: 'student' | 'admin' | 'superadmin'
+  requiredRole?: Role | Role[]
 }) {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -22,11 +24,20 @@ export default function ProtectedRoute({
     try {
       const payloadBase64 = token.split('.')[1];
       const decodedPayload = JSON.parse(atob(payloadBase64));
+      const userRole: Role = decodedPayload.role;
 
-      if (requiredRole && decodedPayload.role !== requiredRole) {
-        // If they lack the role, bounce them out to login or home
-        router.push('/login');
-        return;
+      if (requiredRole) {
+        const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        
+        // Superadmin has full system access and is allowed on admin routes
+        if (allowedRoles.includes('admin') && !allowedRoles.includes('superadmin')) {
+          allowedRoles.push('superadmin');
+        }
+
+        if (!allowedRoles.includes(userRole)) {
+          router.push('/login');
+          return;
+        }
       }
       setIsAuthorized(true);
     } catch (e) {
